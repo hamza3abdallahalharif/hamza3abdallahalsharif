@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote for Class Presenter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            position: relative;
+            min-height: 100vh;
+        }
+        h1 {
+            color: rgb(76, 188, 76);
+            font-size: 72px;
+            margin-bottom: 20px;
+        }
+        button {
+            border: none;
+            color: rgb(8, 39, 2);
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        /* Key Stage Buttons */
+        .ks-btn {
+            background-color: lightgreen; 
+        }
+        /* Year Group Buttons */
+        .year-btn {
+            background-color: turquoise; 
+        }
+        /* Candidate Buttons */
+        .candidate-btn {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid rgb(0, 126, 0);
+            background-color: green;
+            color: #fff;
+        }
+        input {
+            padding: 10px;
+            margin-top: 10px;
+            width: 200px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            width: 60%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        .class-table {
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+        .class-header {
+            background-color: #1be841;
+            color: #004085;
+        }
+        .hamza {
+            position: absolute;
+            bottom: 10px;
+            left: 5px;
+            font-size: 24px;
+            font-style: italic;
+            font-family: 'Cursive';
+        }
+    </style>
+  <img src="ha.png">
+</head>
+<body>
+
+    <h1>Ethos International School</h1>
+
+    <div id="passwordInputDiv">
+        <h2>Please enter the password to access the page:</h2>
+        <input type="password" id="passwordInput" placeholder="Enter password" />
+        <button onclick="checkPassword()">Submit Password</button>
+    </div>
+
+    <div id="content" class="hidden">
+        <h2>Vote for Class Presenter</h2>
+        <p>Who Will Present Your Class?</p>
+
+        <h3>Select Key Stage:</h3>
+        <button class="ks-btn" onclick="selectKeyStage('KS2')">KS2</button>
+        <button class="ks-btn" onclick="selectKeyStage('KS3')">KS3</button>
+        <button class="ks-btn" onclick="selectKeyStage('KS4')">KS4</button>
+
+        <div id="classButtons" class="hidden">
+            <h3>Select Class:</h3>
+            <div id="classes"></div>
+        </div>
+
+        <div id="candidateButtons" class="hidden">
+            <h3>Select Candidates (Choose 2):</h3>
+            <div id="candidates"></div>
+        </div>
+
+        <button id="castVoteBtn" class="hidden" onclick="castVote()">Submit Vote</button>
+        <p>Total Votes: <span id="totalVotes">0</span></p>
+
+        <button onclick="showVotingData()">View Data</button>
+        <div id="dataSection" class="hidden">
+            <h2>Voting Data (Password Required)</h2>
+            <input type="password" id="dataPasswordInput" placeholder="Enter data password" />
+            <button onclick="checkDataPassword()">Submit Data Password</button>
+            <div id="dataTable" class="hidden"></div>
+        </div>
+
+        <button onclick="verifyAndClearData()">Clear All Data</button>
+        <button onclick="verifyAndRefreshVotes()">Refresh Votes</button>
+    </div>
+
+    <div class="hamza">hamzaabdallahalsharif</div>
+
+    <script>
+        const mainPassword = 'Ethos@123';
+        let totalVotes = 0;
+        let votesData = [];
+        let currentClass = '';
+        let selectedCandidates = [];
+        let candidates = [];
+        let uniqueColors = {};  // Store unique colors for each voter
+
+        const classCandidates = {
+  
+            'Y4': {
+                'A': ["Hana Ryahan", "Ibrahim Gazzar", "Dalida Abdlatif"],
+                'B': ["Mamdouh ElTobgy", "Hala Hussein", "Hamza Mohamed", "Abdulrahman Mansour"],
+                'C': ["Karim Rayhan", "Selim Moussa", "Jana Abdelkarim"],
+                'D': ["Youssef Adss", "Khadija Elsherif", "Salma Elbeih"]
+            },
+            'Y5': {
+                'A': ["Yassin Eissa", "Rukan Abdallah", "Farida Eldemerdash", "Alia Mansour", "Omar Marzban", "Jawad Tarahony"],
+                'B': ["Khadija Elnaggar", "Habiba Hussein", "Eyad Eltarahony", "Ghalya Elgamasy", "Ismail Elhalaby"],
+                'C': ["Lina Elkashef", "Camellia Bata’s", "Nada Hassan", "Laila Amr"],
+                'D': ["Yehia Galal", "Yehia Abdelwahab", "Mayar Abdelhalim", "Sarah ElShayal"]
+            },
+            'Y6': {
+                'A': ["Omar Elmesery", "Yahia Radwan", "Mostafa Aref", "Fatema Elsabrout"],
+                'B': ["Seif Ali", "Mariah Atteya", "Abdelwahab Eltobgy", "Said Gad", "Rukaya Sultan"],
+                'C': ["Yusuf Mohsmed Gomaa", "Taim Ali", "Ronza Mohamed", "Omar Ehab", "Hamza Mansour", "Jenny Salman", "Farida Sakr", "Seleem Elhouby"],
+                'D': ["Razan Eslam", "Lara Hussein", "Ziyad Elbeih", "Farida Mohamed"]
+            },
+            'Y7': {
+                'A': ["Ismaeil Ismaeil", "Ishak", "Hamza El Refaei"],
+                'B': ["Farah Hassan", "Talia Rayhan", "Selim Nada", "Youssef Darwish"],
+                'C': ["Omar Osama", "Mariam Mowad", "Joumana Abdel"],
+                'D': ["Yahia El Ashry", "Hashem Atwan", "Omar Ali"]
+            },
+            'Y8': {
+                'A': ["Maram El Hadidy", "Malek El Hariry", "Youssef Samra", "Wateen"],
+                'B': ["Lama El Sayed", "Gassem", "Nour El Din"],
+                'C': ["Farida Marban", "Seif El Amir", "Ebrahim El Metiny", "Adam Khaled", "Youssef El Refaey"],
+                'D': ["Yassin Eslam", "Youssef El Sayed", "Youssef Hesham"]
+            },
+            'Y9': {
+                'A': ["Mariam Kotb", "Alia Tamer", "Omar hossam", "Helm Haitham", "Laila Ahmed"],
+                'B': ["Yassin Kotb", "Farida Abd El Hak", "Laila Mohamed"],
+                'C': ["Yassin Karim", "Alia El Sayed", "Yehia Ahmed", "Hamza Hussien", "Zayed El Shaarawy"],
+                'D': ["Nour Hazem", "Omar Haitham", "Ibrahim Abo El Magd", "Yassin Baraka", "Mazen Ayman"]
+            },
+            'Y10': {
+                'A': ["Zyad Islam", "Asser mohamed", "Alleyeldin Mohamed", "Hamza Agamawy", "Youssef Hesham", "Laila Ahmed Mahmoud", "Nariman Loay", "Malak Mahmoud", "Omar moussa", "Adham Ashraf"],
+                'B': ["Jaidaa Khaled", "Hussien abo el fadl", "Yassin Amr", "Farida Zaki", "Yassin Hany"],
+                'C': ['Omar Tarahouny','Omar Hany','Yahia Kobtan','Amr Sultan','Yassin Hashem','Sara Mohamed'] 
+            },
+            'Y11': {
+                'A': ["Adam akram", "Moaz Ayman", "Laila Ahmed", "Jana Mohamed salama", "Omar Eissawy", "Yehia Ahmed"],
+                'B': ["Rodaina abou El gough", "Malek El gioshy", "Amr Ghanem", "Abd Allah El Sherif", "Ebada Hussien"]
+            }
+        };
+
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === mainPassword) {
+                document.getElementById('content').classList.remove('hidden');
+                document.getElementById('passwordInputDiv').classList.add('hidden');
+            } else {
+                alert('Incorrect password. Please try again.');
+            }
+        }
+
+        function selectKeyStage(keyStage) {
+            currentClass = '';
+            candidates = [];
+            selectedCandidates = [];
+            document.getElementById('classButtons').classList.remove('hidden');
+            const classButtons = document.getElementById('classes');
+            classButtons.innerHTML = '';
+
+            for (let year = 4; year <= 10; year++) {
+                const yearLabel = `Y${year}`;
+                if (classCandidates[yearLabel]) {
+                    const button = document.createElement('button');
+                    button.className = 'year-btn';
+                    button.innerHTML = yearLabel;
+                    button.onclick = () => selectClass(yearLabel);
+                    classButtons.appendChild(button);
+                }
+            }
+        }
+
+        function selectClass(year) {
+            currentClass = year;
+            candidates = Object.values(classCandidates[year]).flat();
+            document.getElementById('candidateButtons').classList.remove('hidden');
+            const candidateButtons = document.getElementById('candidates');
+            candidateButtons.innerHTML = '';
+
+            candidates.forEach(candidate => {
+                const button = document.createElement('button');
+                button.className = 'candidate-btn';
+                button.innerHTML = candidate;
+                button.onclick = () => selectCandidate(candidate);
+                candidateButtons.appendChild(button);
+            });
+        }
+
+        function selectCandidate(candidate) {
+            if (selectedCandidates.length < 2 && !selectedCandidates.includes(candidate)) {
+                selectedCandidates.push(candidate);
+                alert(`${candidate} has been selected. You have ${2 - selectedCandidates.length} votes remaining.`);
+            } else if (selectedCandidates.includes(candidate)) {
+                alert(`${candidate} is already selected.`);
+            } else {
+                alert('You can only select 2 candidates.');
+            }
+
+            if (selectedCandidates.length === 2) {
+                document.getElementById('castVoteBtn').classList.remove('hidden');
+            }
+        }
+
+        function castVote() {
+            totalVotes++;
+            document.getElementById('totalVotes').innerText = totalVotes;
+
+            selectedCandidates.forEach(candidate => {
+                const existingVote = votesData.find(vote => vote.candidate === candidate);
+                if (existingVote) {
+                    existingVote.count++;
+                } else {
+                    votesData.push({ candidate, count: 1 });
+                }
+            });
+
+            selectedCandidates = [];
+            alert('Vote submitted successfully! You can now select your candidates again.');
+            document.getElementById('candidateButtons').classList.add('hidden');
+            document.getElementById('castVoteBtn').classList.add('hidden');
+        }
+
+        function showVotingData() {
+            document.getElementById('dataSection').classList.remove('hidden');
+        }
+
+        function checkDataPassword() {
+            const dataPassword = document.getElementById('dataPasswordInput').value;
+            if (dataPassword === mainPassword) {
+                displayData();
+                document.getElementById('dataPasswordInput').value = ''; // Clear input
+            } else {
+                alert('Incorrect password for data access.');
+            }
+        }
+
+        function displayData() {
+            const dataTable = document.getElementById('dataTable');
+            dataTable.innerHTML = '';
+
+            for (const [className, classData] of Object.entries(classCandidates)) {
+                const table = document.createElement('table');
+                table.className = 'class-table';
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'class-header';
+                headerRow.innerHTML = `<th>${className}</th><th>Candidate</th><th>Total Votes</th>`;
+                table.appendChild(headerRow);
+
+                for (const [subClass, candidates] of Object.entries(classData)) {
+                    candidates.forEach(candidate => {
+                        const candidateVotes = votesData.find(vote => vote.candidate === candidate) || { count: 0 };
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${subClass}</td><td>${candidate}</td><td>${candidateVotes.count}</td>`;
+                        table.appendChild(row);
+                    });
+                }
+                dataTable.appendChild(table);
+            }
+            dataTable.classList.remove('hidden');
+        }
+
+        function verifyAndClearData() {
+            const confirmClear = confirm('Are you sure you want to clear all voting data?');
+            if (confirmClear) {
+                votesData = [];
+                totalVotes = 0;
+                document.getElementById('totalVotes').innerText = totalVotes;
+                alert('All voting data has been cleared.');
+            }
+        }
+
+        function verifyAndRefreshVotes() {
+            const confirmRefresh = confirm('Are you sure you want to refresh votes? This will update the current vote count.');
+            if (confirmRefresh) {
+                displayData(); // Refreshes the data display
+                alert('Votes have been refreshed.');
+            }
+        }
+        // Load votes from local storage on page load
+window.onload = function() {
+    const storedVotes = JSON.parse(localStorage.getItem('votesData'));
+    if (storedVotes) {
+        votesData = storedVotes;
+        totalVotes = votesData.reduce((sum, vote) => sum + vote.count, 0);
+        document.getElementById('totalVotes').innerText = totalVotes;
+    }
+};
+
+// Save votes to local storage
+function saveVotesToLocalStorage() {
+    localStorage.setItem('votesData', JSON.stringify(votesData));
+}
+
+// Clear all voting data from local storage
+function clearVotesFromLocalStorage() {
+    localStorage.removeItem('votesData');
+}
+
+// Call this function after casting a vote
+function castVote() {
+    // Increment the total votes and update the display
+    totalVotes++;
+    document.getElementById('totalVotes').innerText = totalVotes;
+
+    selectedCandidates.forEach(candidate => {
+        const existingVote = votesData.find(vote => vote.candidate === candidate);
+        if (existingVote) {
+            existingVote.count++;
+        } else {
+            votesData.push({ candidate, count: 1 });
+        }
+    });
+
+    // Save updated votes to local storage
+    saveVotesToLocalStorage();
+
+    selectedCandidates = [];
+    alert('Vote submitted successfully! You can now select your candidates again.');
+    document.getElementById('candidateButtons').classList.add('hidden');
+    document.getElementById('castVoteBtn').classList.add('hidden');
+}
+
+// Call this function to clear data
+function verifyAndClearData() {
+    if (confirm('Are you sure you want to clear all voting data? This action cannot be undone.')) {
+        votesData = [];
+        totalVotes = 0;
+        clearVotesFromLocalStorage(); // Clear data from local storage
+        document.getElementById('totalVotes').innerText = totalVotes;
+        alert('All voting data has been cleared.');
+    }
+}
+// Load votes from local storage on page load
+window.onload = function() {
+    const storedVotes = JSON.parse(localStorage.getItem('votesData'));
+    if (storedVotes) {
+        votesData = storedVotes;
+        totalVotes = votesData.reduce((sum, vote) => sum + vote.count, 0);
+        document.getElementById('totalVotes').innerText = totalVotes;
+    }
+};
+
+// Save votes to local storage
+function saveVotesToLocalStorage() {
+    localStorage.setItem('votesData', JSON.stringify(votesData));
+}
+
+// Cast Vote Function
+function castVote() {
+    // Increment the total votes and update the display
+    totalVotes++;
+    document.getElementById('totalVotes').innerText = totalVotes;
+
+    selectedCandidates.forEach(candidate => {
+        const existingVote = votesData.find(vote => vote.candidate === candidate);
+        if (existingVote) {
+            existingVote.count++;
+        } else {
+            votesData.push({ candidate, count: 1 });
+        }
+    });
+
+    // Save updated votes to local storage
+    saveVotesToLocalStorage();
+
+    selectedCandidates = [];
+    alert('Vote submitted successfully! You can now select your candidates again.');
+    document.getElementById('candidateButtons').classList.add('hidden');
+    document.getElementById('castVoteBtn').classList.add('hidden');
+}
+window.onload = function() {
+    // Initialize votesData
+    votesData = JSON.parse(localStorage.getItem('votesData')) || []; // Ensure it's an empty array if no data is found
+
+    // Calculate the total votes safely
+    totalVotes = votesData.reduce((sum, vote) => {
+        return sum + (vote.count || 0); // Use (vote.count || 0) to avoid NaN
+    }, 0);
+
+    document.getElementById('totalVotes').innerText = totalVotes; // Update the total votes display
+};
+
+// Save votes to local storage
+function saveVotesToLocalStorage() {
+    localStorage.setItem('votesData', JSON.stringify(votesData));
+}
+
+// Clear all voting data from local storage
+function clearVotesFromLocalStorage() {
+    localStorage.removeItem('votesData');
+}
+
+// Update the castVote function to ensure proper storage and updating of votes
+function castVote() {
+    // Increment the total votes and update the display
+    totalVotes++;
+    document.getElementById('totalVotes').innerText = totalVotes;
+
+    selectedCandidates.forEach(candidate => {
+        const existingVote = votesData.find(vote => vote.candidate === candidate);
+        if (existingVote) {
+            existingVote.count++;
+        } else {
+            votesData.push({ candidate, count: 1 });
+        }
+    });
+
+    // Save updated votes to local storage
+    saveVotesToLocalStorage();
+
+    selectedCandidates = [];
+    alert('Vote submitted successfully! You can now select your candidates again.');
+    document.getElementById('candidateButtons').classList.add('hidden');
+    document.getElementById('castVoteBtn').classList.add('hidden');
+}
+// Update the castVote function to ensure proper storage and updating of votes
+function castVote() {
+    // Increment the total votes by 2 and update the display
+    totalVotes += 2; // Count as two votes for each submission
+    document.getElementById('totalVotes').innerText = totalVotes;
+
+    selectedCandidates.forEach(candidate => {
+        const existingVote = votesData.find(vote => vote.candidate === candidate);
+        if (existingVote) {
+            existingVote.count += 2; // Increment by 2 for existing votes
+        } else {
+            votesData.push({ candidate, count: 2 }); // Add new candidate with 2 votes
+        }
+    });
+
+    // Save updated votes to local storage
+    saveVotesToLocalStorage();
+
+    selectedCandidates = [];
+    alert('Vote submitted successfully! You can now select your candidates again.');
+    document.getElementById('candidateButtons').classList.add('hidden');
+    document.getElementById('castVoteBtn').classList.add('hidden');
+}
+// JavaScript Part
+function castVote() {
+    totalVotes += 2; // Count as two votes for each submission
+    document.getElementById('totalVotes').innerText = totalVotes;
+
+    selectedCandidates.forEach(candidate => {
+        const existingVote = votesData.find(vote => vote.candidate === candidate);
+        if (existingVote) {
+            existingVote.count += 2; // Increment by 2 for existing votes
+        } else {
+            votesData.push({ candidate, count: 2 }); // Add new candidate with 2 votes
+        }
+    });
+
+    saveVotesToLocalStorage();
+
+    selectedCandidates = [];
+    alert('Vote submitted successfully! You can now select your candidates again.');
+    document.getElementById('candidateButtons').classList.add('hidden');
+    document.getElementById('castVoteBtn').classList.add('hidden');
+}
+
+
+    </script>
+</body>
+</html>
+
